@@ -54,12 +54,12 @@ object Main {
             while(ci.hasNext){
                 var c = ci.next();
                 if (c == '('){
-                    if(!findRight(ci)) false;
+                    if(!findRight(ci)) return(false);
                 } else if(c == ')'){
-                    true;
+                    return(true);
                 }
             }
-            false;
+            return(false);
         }
 
         val ci:Iterator[Char] = chars.iterator;
@@ -67,12 +67,12 @@ object Main {
             var c = ci.next();
             //println(c);
             if(c == ')'){
-                false;
+                return(false);
             } else if(c == '('){
-                if(!findRight(ci)) false;
+                if(!findRight(ci)) return(false);
             }
         }
-        true;
+        return(true);
     }
     
     //================================================================================
