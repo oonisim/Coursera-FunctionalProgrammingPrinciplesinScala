@@ -113,6 +113,7 @@ object Main {
 
 	/* 
          * !!! The purpose of functional program and recursion is NOT to use loop which is basically jump!
+         * Instead of deducting (denomi * coins), call countChange(money - coins.head, coins).
          */
         while( (denomi * ncoins) <= money ){
             // Use coins (0, 1, ...) and search for combination without the coin.
