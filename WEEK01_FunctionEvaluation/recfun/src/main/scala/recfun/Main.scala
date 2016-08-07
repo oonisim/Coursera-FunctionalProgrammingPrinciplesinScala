@@ -1,15 +1,12 @@
-//================================================================================
-// Functional Programming Principles in Scala - Getting Started + Functions & Evaluation 
-// URL: https://www.coursera.org/learn/progfun1/programming/Ey6Jf
-//================================================================================
 package recfun
 object Main {
+    /*
     var maps = scala.collection.mutable.Map[Int, Int]();
     def printmaps():Unit = {
         println(maps);
         maps = scala.collection.mutable.Map[Int, Int]();
     }
-
+    */
     def main(args: Array[String]) {
         println("Pascal's Triangle")
         for (row <- 0 to 10) {
@@ -18,12 +15,13 @@ object Main {
           println()
         }
         /*
-        val l:List[Char] = "())(".toList;
-        println(balance(l));
         println(countChange(9, List(5, 3, 1)));
+        val l:List[Char] = "I am (hoge()((hogehoge)tako(a)ika)".toList;
+        println(balance(l));
         */
-   }
 
+   }
+   
     //================================================================================
     // [Exercise 1]
     // Implementing the pascal triangle function which takes a column c and a row r, 
@@ -48,9 +46,15 @@ object Main {
     // The function should return false for the following strings:
     // * :-) 
     // * ())(   
+    // [Note]
+    // Aling with the functional programming principles:
+    // * Tail recursion instead of loop.
+    // * Use evaluation not return.
+    // * Immutable.
     //================================================================================
     def balance(chars: List[Char]): Boolean = {
-        def findRight(ci: Iterator[Char]): Boolean = {
+	/*
+    	def findRight(ci: Iterator[Chjavascript:void(0)ar]): Boolean = {
             while(ci.hasNext){
                 var c = ci.next();
                 if (c == '('){
@@ -63,10 +67,6 @@ object Main {
         }
 
         val ci:Iterator[Char] = chars.iterator;
-	/* 
-         * !!! The purpose of functional program and recursion is NOT to use loop which is basically jump!
-         * Instead of while/iterator, use list.head and list.tail. Divide into tree leaves.
-         */
         while(ci.hasNext){	
             var c = ci.next();
             if(c == ')'){
@@ -76,6 +76,30 @@ object Main {
             }
         }
         return(true);
+	*/
+
+
+        val level:Int = 0;
+        def find(chars: List[Char], level:Int):Boolean = {
+            if(chars.isEmpty) {
+                if (level > 0) false;
+                else true;
+            } else {
+                chars.head match {
+                    case ')' => {
+                        if(level > 0) find(chars.tail, level -1);
+                        else false;
+                    }
+                    case '(' => {
+                        find(chars.tail, level + 1);
+                    }
+                    case default => {
+                        find(chars.tail, level);
+                    }
+                }
+            }
+        }
+        find(chars, level);
     }
     
     //================================================================================
@@ -89,17 +113,15 @@ object Main {
             //--------------------------------------------------------------------------------
             // There is no combination available.
             //--------------------------------------------------------------------------------
-            return(0); 
-        }
-        if(money == 0){
+            0; 
+        } else if(money == 0){
             //--------------------------------------------------------------------------------
             // There is one combination identified at the caller function which is without using 
             // the coins.head here.
             //--------------------------------------------------------------------------------
             //printmaps();
-            return(1);
-        }  
-        if(coins.isEmpty){
+            1;
+        } else if(coins.isEmpty){
             //--------------------------------------------------------------------------------
             // All denominations are exhuasted. No coin is left available to count combination.
             // If the caller function has come up with combination with remaining money is 0,
@@ -107,23 +129,23 @@ object Main {
             // If not, the caller fucntion has asked to find out a combination that cannot exit.
             // Hence return 0.
             //--------------------------------------------------------------------------------
-            return(0);
+            0;
+        } else {
+        	/* 
+             * !!! The purpose of functional program and recursion is NOT to use loop which is basically jump!
+             * Instead of deducting (denomi * coins), call countChange(money - coins.head, coins).
+             */
+            /*
+            while( (denomi * ncoins) <= money ){
+                // Use coins (0, 1, ...) and search for combination without the coin.
+                //maps.update(denomi, ncoins);
+                count += countChange(money - (denomi * ncoins), coins.tail);
+                ncoins += 1;
+            }
+            return(count);
+            */
+            // Total cases = Use the head coin (denomination is coins.head) and not use it.
+            countChange(money - coins.head, coins) + countChange(money, coins.tail);
         }
-
-        val denomi:Int = coins.head;
-        var ncoins:Int = 0;
-        var count:Int = 0;
-
-	/* 
-         * !!! The purpose of functional program and recursion is NOT to use loop which is basically jump!
-         * Instead of deducting (denomi * coins), call countChange(money - coins.head, coins).
-         */
-        while( (denomi * ncoins) <= money ){
-            // Use coins (0, 1, ...) and search for combination without the coin.
-            maps.update(denomi, ncoins);
-            count += countChange(money - (denomi * ncoins), coins.tail);
-            ncoins += 1;
-        }
-        return(count);
     }
 }
