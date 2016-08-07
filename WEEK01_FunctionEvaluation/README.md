@@ -1,5 +1,3 @@
-ssignment 1: Recursion
-
 ## Exercise 1: Pascal’s Triangle
 
 The following pattern of numbers is called Pascal’s triangle.
