@@ -111,6 +111,9 @@ object Main {
         var ncoins:Int = 0;
         var count:Int = 0;
 
+	/* 
+         * !!! The purpose of functional program and recursion is NOT to use loop which is basically jump!
+         */
         while( (denomi * ncoins) <= money ){
             // Use coins (0, 1, ...) and search for combination without the coin.
             maps.update(denomi, ncoins);
