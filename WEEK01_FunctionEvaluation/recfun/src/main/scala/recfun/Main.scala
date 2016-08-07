@@ -63,9 +63,12 @@ object Main {
         }
 
         val ci:Iterator[Char] = chars.iterator;
+	/* 
+         * !!! The purpose of functional program and recursion is NOT to use loop which is basically jump!
+         * Instead of while/iterator, use list.head and list.tail. Divide into tree leaves.
+         */
         while(ci.hasNext){	
             var c = ci.next();
-            //println(c);
             if(c == ')'){
                 return(false);
             } else if(c == '('){
