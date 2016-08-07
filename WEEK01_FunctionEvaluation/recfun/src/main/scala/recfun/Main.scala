@@ -94,22 +94,42 @@ object Main {
         return(true);
 	*/
 
-
+        //--------------------------------------------------------------------------------
+        // Val level keeps tracks of the nested parentheses level.
+        //--------------------------------------------------------------------------------
         val level:Int = 0;
         def find(chars: List[Char], level:Int):Boolean = {
             if(chars.isEmpty) {
+                //--------------------------------------------------------------------------------
+                // End of the input. 
+                // If find() is in the middle of searching for ')' to be paird with '(', then 
+                // find the match failed -> unbalanced.
+                //--------------------------------------------------------------------------------
                 if (level > 0) false;
                 else true;
             } else {
                 chars.head match {
                     case ')' => {
+                        //--------------------------------------------------------------------------------
+                        // When right parenthsis is found without having encountered left (level <= 0)
+                        // then the input included unpaired right parenthsis -> False.
+                        // Otherwise, it is the right one for the left for which the find() is invoked.
+                        // Go one nest level up and continue looking for ')' for the left of previous find().
+                        //--------------------------------------------------------------------------------
                         if(level > 0) find(chars.tail, level -1);
                         else false;
                     }
                     case '(' => {
+                        //--------------------------------------------------------------------------------
+                        // When 'left parenthsis'(' is found, increase the nest level and start a new find() 
+                        // for ')' to be paried with.
+                        //--------------------------------------------------------------------------------
                         find(chars.tail, level + 1);
                     }
                     case default => {
+                        //--------------------------------------------------------------------------------
+                        // Keep looking for the ')' for the current find().
+                        //--------------------------------------------------------------------------------
                         find(chars.tail, level);
                     }
                 }
@@ -160,7 +180,7 @@ object Main {
             }
             return(count);
             */
-            // Total cases = Use the head coin (denomination is coins.head) and not use it.
+            // Use the head coin (denomination is coins.head) and not use it.
             countChange(money - coins.head, coins) + countChange(money, coins.tail);
         }
     }
