@@ -180,7 +180,7 @@ object Main {
             }
             return(count);
             */
-            // Use the head coin (denomination is coins.head) and not use it.
+            // Total cases = Use the head coin (denomination is coins.head) + not use it.
             countChange(money - coins.head, coins) + countChange(money, coins.tail);
         }
     }
