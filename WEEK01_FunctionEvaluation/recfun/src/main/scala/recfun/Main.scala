@@ -1,3 +1,19 @@
+/*================================================================================
+[Subject]
+Coursera Functional Programming Principles in Scala
+Week 01 Programming Assignment: Recursion
+
+[URL]
+https://www.coursera.org/learn/progfun1/programming/Ey6Jf
+
+[Result]
+Your overall score for this assignment is 10.00 out of 10.00
+Our automated style checker tool could not find any issues with your code. 
+You obtained the maximal style score of 2.00.
+
+[History]
+Version 1.0	07 AUG 2016
+================================================================================*/
 package recfun
 object Main {
     /*
