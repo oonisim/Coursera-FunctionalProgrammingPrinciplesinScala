@@ -1,7 +1,9 @@
 package funsets
 
 /**
- * 2. Purely Functional Sets.
+ * Coursera Functional Programming Principles in Scala
+ * https://www.coursera.org/learn/progfun1/home/welcome
+ * WEEK 02 Assignment 2. Purely Functional Sets.
  */
 object FunSets {
   /**
@@ -30,13 +32,13 @@ object FunSets {
    * Returns the intersection of the two given sets,
    * the set of all elements that are both in `s` and `t`. 
    */
-  def intersect(s: Set, t: Set): Set = (i: Int) => (contains(s, i) && contains(t, i))
+  def intersect(s: Set, t: Set): Set = (i: Int) => s(i) && t(i)
 
   /**
    * Returns the difference of the two given sets,
    * the set of all elements of `s` that are not in `t`.
    */
-  def diff(s: Set, t: Set): Set = (i: Int) => (contains(s, i) && !contains(t, i))
+  def diff(s: Set, t: Set): Set = (i: Int) => s(i) && !t(i)
 
   /**
    * Returns the subset of `s` for which `p` holds.
@@ -57,7 +59,8 @@ object FunSets {
       else if (contains(s, a)) {
         if (p(a)) iter(a - 1)
         else false
-      } // If it is not within s, it does not matter. continue next.
+      } 
+      // If it is not within s, it does not matter. continue next.
       else iter(a - 1)
     }
     iter(bound)
