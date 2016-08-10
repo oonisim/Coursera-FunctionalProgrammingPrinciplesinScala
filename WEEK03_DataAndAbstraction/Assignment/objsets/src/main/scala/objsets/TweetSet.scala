@@ -184,6 +184,12 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
     val ts:TweetSet = filterAcc(tw => tw.retweets > elem.retweets, e)
     if( ts == e) elem
     else {
+      /*
+      println("--------------------------------------------------------------------------------")
+      println("Ts is not e printing contents")
+      println("--------------------------------------------------------------------------------")
+      ts.foreach { x => println(x) }
+      */
       ts.mostRetweeted
     }
   }
@@ -192,7 +198,8 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
     // Create Cons list with the most-retweeted one and keep adding recursively.
     // When reached at the Empty, descendingByRetweet returns Nil, closing the list.
     //--------------------------------------------------------------------------------
-    new Cons(mostRetweeted, remove(elem).descendingByRetweet)
+    val t : Tweet = mostRetweeted
+    new Cons(t, remove(t).descendingByRetweet)
   }
   /**
    * The following methods are already implemented
@@ -258,15 +265,20 @@ object GoogleVsApple {
   //--------------------------------------------------------------------------------
   lazy val googleTweets: TweetSet = allTweets.filter(tw => google.exists(x => tw.text.contains(x)))
   lazy val appleTweets: TweetSet = allTweets.filter(tw => apple.exists(x => tw.text.contains(x)))
+  /*
+  println("--------------------------------------------------------------------------------")
+  println("Printing Apple tweets");
+  println("--------------------------------------------------------------------------------")
+  appleTweets.foreach ( x => println )
+  */
 
   //--------------------------------------------------------------------------------
   // A list of all tweets mentioning a keyword from either apple or google,
   // sorted by the number of retweets.
   //--------------------------------------------------------------------------------
-  lazy val trending: TweetList = (googleTweets union appleTweets).descendingByRetweet
+  lazy val trending: TweetList = googleTweets.union(appleTweets).descendingByRetweet
 }
 
 object Main extends App {
-  // Print the trending tweets
   GoogleVsApple.trending foreach println
 }
