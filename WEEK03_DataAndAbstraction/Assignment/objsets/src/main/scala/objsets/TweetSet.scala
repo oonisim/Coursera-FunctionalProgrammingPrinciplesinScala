@@ -48,7 +48,9 @@ abstract class TweetSet {
    * Question: Can we implment this method here, or should it remain abstract
    * and be implemented in the subclasses?
    */
-  def filter(p: Tweet => Boolean): TweetSet = filterAcc(p, this)
+  def filter(p: Tweet => Boolean): TweetSet = {
+    filterAcc(p, new Empty())
+  }
 
   /**
    * This is a helper method for `filter` that propagetes the accumulated tweets.
@@ -134,10 +136,18 @@ class Empty extends TweetSet {
 
 class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
 
+  //--------------------------------------------------------------------------------
+  // Accumulate a set of Tweets which satisfies the test function p.
+  //--------------------------------------------------------------------------------
   def filterAcc(p: Tweet => Boolean, acc: TweetSet): TweetSet = {
-    val i: TweetSet = ((left filterAcc (p, acc)) filterAcc (p, right))
-    if (p(elem)) i.incl(elem) else i
+    //--------------------------------------------------------------------------------
+    // Request left and then right to accumulate with test p. Add itself if p meets.
+    //--------------------------------------------------------------------------------
+    val i: TweetSet = right.filterAcc(p, (left.filterAcc(p, acc)))
+    if (p(elem)) i.incl(elem)
+    else i
   }
+
   def union(that: TweetSet): TweetSet = {
     //--------------------------------------------------------------------------------
     // Within this set, keep recursing down to the left-most node.
@@ -170,37 +180,19 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
     (right union ((left union that) incl elem))
   }
   def mostRetweeted: Tweet = {
-    val Dummy: Tweet = new Tweet("", "", -1)
-    var l: Tweet = null
-    var r: Tweet = null
-    try {
-      l = left.mostRetweeted
-    } catch {
-      case e: NoSuchElementException => {
-        l = Dummy
-      }
-    }
-    try {
-      r = right.mostRetweeted
-    } catch {
-      case e: NoSuchElementException => {
-        r = Dummy
-      }
-    }
-    if (l.retweets > r.retweets) {
-      if (elem.retweets > l.retweets) elem
-      else l
-    } else {
-      if (elem.retweets > r.retweets) elem
-      else r
+    val e = new Empty
+    val ts:TweetSet = filterAcc(tw => tw.retweets > elem.retweets, e)
+    if( ts == e) elem
+    else {
+      ts.mostRetweeted
     }
   }
   def descendingByRetweet: TweetList = {
     //--------------------------------------------------------------------------------
-    // Create Cons with the most-retweeted one and keep adding recussively.
-    // When only Empty set is left, the call retuns Nil, closing the list.
+    // Create Cons list with the most-retweeted one and keep adding recursively.
+    // When reached at the Empty, descendingByRetweet returns Nil, closing the list.
     //--------------------------------------------------------------------------------
-    new Cons(mostRetweeted, this.remove(elem).descendingByRetweet)
+    new Cons(mostRetweeted, remove(elem).descendingByRetweet)
   }
   /**
    * The following methods are already implemented
@@ -253,6 +245,9 @@ class Cons(val head: Tweet, val tail: TweetList) extends TweetList {
   def isEmpty = false
 }
 
+//================================================================================
+// Test
+//================================================================================
 object GoogleVsApple {
   val allTweets = TweetReader.allTweets
   val google = List("android", "Android", "galaxy", "Galaxy", "nexus", "Nexus")
