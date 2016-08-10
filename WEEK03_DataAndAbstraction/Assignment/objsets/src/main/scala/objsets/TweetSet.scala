@@ -1,7 +1,11 @@
 package objsets
 
+import java.util.NoSuchElementException
 import TweetReader._
 
+//================================================================================
+// Tweet data structure
+//================================================================================
 /**
  * A class to represent tweets.
  */
@@ -11,6 +15,9 @@ class Tweet(val user: String, val text: String, val retweets: Int) {
       "Text: " + text + " [" + retweets + "]"
 }
 
+//================================================================================
+// TweetSet data structure
+//================================================================================
 /**
  * This represents a set of objects of type `Tweet` in the form of a binary search
  * tree. Every branch in the tree has two children (two `TweetSet`s). There is an
@@ -65,7 +72,7 @@ abstract class TweetSet {
    * Question: Should we implment this method here, or should it remain abstract
    * and be implemented in the subclasses?
    */
-  def mostRetweeted: Tweet = ???
+  def mostRetweeted: Tweet
 
   /**
    * Returns a list containing all tweets of this set, sorted by retweet count
@@ -76,7 +83,7 @@ abstract class TweetSet {
    * Question: Should we implment this method here, or should it remain abstract
    * and be implemented in the subclasses?
    */
-  def descendingByRetweet: TweetList = ???
+  def descendingByRetweet: TweetList
 
   /**
    * The following methods are already implemented
@@ -112,31 +119,88 @@ class Empty extends TweetSet {
   }
 
   def union(that: TweetSet): TweetSet = {
-    return(that);  
+    that
   }
-
+  def mostRetweeted: Tweet = throw new NoSuchElementException
+  def descendingByRetweet: TweetList = Nil
   /**
    * The following methods are already implemented
    */
-
   def contains(tweet: Tweet): Boolean = false
-
   def incl(tweet: Tweet): TweetSet = new NonEmpty(tweet, new Empty, new Empty)
-
   def remove(tweet: Tweet): TweetSet = this
-
   def foreach(f: Tweet => Unit): Unit = ()
-  
 }
 
 class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
 
   def filterAcc(p: Tweet => Boolean, acc: TweetSet): TweetSet = {
-    val i:TweetSet = ((left filterAcc (p, acc)) filterAcc (p, right))
-    if(p(elem)) i.incl(elem) else i
+    val i: TweetSet = ((left filterAcc (p, acc)) filterAcc (p, right))
+    if (p(elem)) i.incl(elem) else i
   }
   def union(that: TweetSet): TweetSet = {
-        (right union ((left union that) incl elem))
+    //--------------------------------------------------------------------------------
+    // Within this set, keep recursing down to the left-most node.
+    // From the left-most, start adding each node to "that" set by (incl elem).
+    //    LB(Left-Bottom)
+    //    / \  
+    //   /   E
+    //  E <=== (E union that (T)) returns that  
+    //
+    //    LB(Left-Bottom) <=== (T incl elem) adds LB to T and replaced with T.
+    //      \  
+    //       E
+    //
+    //    T(That)
+    //      \  
+    //       E <=== (right union T) returns that.
+    //
+    //    T    <=== The LB becomes T.
+    //
+    //    LB-1(Left-Bottom -1 level) <=== (T incl elem) adds LB-1 to T and replaced with T.
+    //      \  
+    //       N(Node)
+    //
+    //    T 
+    //      \  
+    //       N(Node) <=== Repeat the pattern of LB.
+    //      / \
+    //     E   E
+    //--------------------------------------------------------------------------------
+    (right union ((left union that) incl elem))
+  }
+  def mostRetweeted: Tweet = {
+    val Dummy: Tweet = new Tweet("", "", -1)
+    var l: Tweet = null
+    var r: Tweet = null
+    try {
+      l = left.mostRetweeted
+    } catch {
+      case e: NoSuchElementException => {
+        l = Dummy
+      }
+    }
+    try {
+      r = right.mostRetweeted
+    } catch {
+      case e: NoSuchElementException => {
+        r = Dummy
+      }
+    }
+    if (l.retweets > r.retweets) {
+      if (elem.retweets > l.retweets) elem
+      else l
+    } else {
+      if (elem.retweets > r.retweets) elem
+      else r
+    }
+  }
+  def descendingByRetweet: TweetList = {
+    //--------------------------------------------------------------------------------
+    // Create Cons with the most-retweeted one and keep adding recussively.
+    // When only Empty set is left, the call retuns Nil, closing the list.
+    //--------------------------------------------------------------------------------
+    new Cons(mostRetweeted, this.remove(elem).descendingByRetweet)
   }
   /**
    * The following methods are already implemented
@@ -165,6 +229,9 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
   }
 }
 
+//================================================================================
+// TweetList data structure
+//================================================================================
 trait TweetList {
   def head: Tweet
   def tail: TweetList
@@ -187,17 +254,21 @@ class Cons(val head: Tweet, val tail: TweetList) extends TweetList {
 }
 
 object GoogleVsApple {
+  val allTweets = TweetReader.allTweets
   val google = List("android", "Android", "galaxy", "Galaxy", "nexus", "Nexus")
   val apple = List("ios", "iOS", "iphone", "iPhone", "ipad", "iPad")
 
-  lazy val googleTweets: TweetSet = ???
-  lazy val appleTweets: TweetSet = ???
+  //--------------------------------------------------------------------------------
+  // Test if at least one keyword included in a tweet.
+  //--------------------------------------------------------------------------------
+  lazy val googleTweets: TweetSet = allTweets.filter(tw => google.exists(x => tw.text.contains(x)))
+  lazy val appleTweets: TweetSet = allTweets.filter(tw => apple.exists(x => tw.text.contains(x)))
 
-  /**
-   * A list of all tweets mentioning a keyword from either apple or google,
-   * sorted by the number of retweets.
-   */
-  lazy val trending: TweetList = ???
+  //--------------------------------------------------------------------------------
+  // A list of all tweets mentioning a keyword from either apple or google,
+  // sorted by the number of retweets.
+  //--------------------------------------------------------------------------------
+  lazy val trending: TweetList = (googleTweets union appleTweets).descendingByRetweet
 }
 
 object Main extends App {
