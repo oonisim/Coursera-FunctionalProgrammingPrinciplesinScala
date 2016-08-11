@@ -1,3 +1,11 @@
+/*********************************************************************************
+* Coursera Functional Programming Principles in Scala Week 3 assignment
+* [URL]
+* https://www.coursera.org/learn/progfun1/home/week/3
+* 
+* [Debugging]
+* (Cons/TweetSet).foreach ( x => println(x) ) can show the data in the set/list.
+********************************************************************************/
 package objsets
 
 import java.util.NoSuchElementException
@@ -180,25 +188,28 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
     (right union ((left union that) incl elem))
   }
   def mostRetweeted: Tweet = {
+    //--------------------------------------------------------------------------------
+    // Run filterAcc(this) to add tweets that were re-tweeted more than this tweet, into the empty set e.
+    // If no tweet is added, the filterAcc return is same with e. Then the most tweeted is this one.
+    // Otherwise, a set of tweets that retweeted more that this tweet is returned (ts).
+    // Then ask ts to get the most retweeted by recursively calling mostRetweeted.
+    //--------------------------------------------------------------------------------
     val e = new Empty
-    val ts:TweetSet = filterAcc(tw => tw.retweets > elem.retweets, e)
-    if( ts == e) elem
-    else {
-      /*
-      println("--------------------------------------------------------------------------------")
-      println("Ts is not e printing contents")
-      println("--------------------------------------------------------------------------------")
-      ts.foreach { x => println(x) }
-      */
+    val ts: TweetSet = this.filterAcc(tw => tw.retweets > elem.retweets, e)
+    if (ts == e) {
+      this.elem
+    } else {
+      //ts.foreach ( x => println(x) ) // List out all the tweets whose retweets are more than this tweet.
       ts.mostRetweeted
     }
   }
+
   def descendingByRetweet: TweetList = {
     //--------------------------------------------------------------------------------
-    // Create Cons list with the most-retweeted one and keep adding recursively.
-    // When reached at the Empty, descendingByRetweet returns Nil, closing the list.
+    // Create Cons list with the most-retweeted at top and recurse-adding next-most-retweeted.
+    // When reached at Empty, descendingByRetweet returns Nil, which closes the list with it.
     //--------------------------------------------------------------------------------
-    val t : Tweet = mostRetweeted
+    val t: Tweet = mostRetweeted
     new Cons(t, remove(t).descendingByRetweet)
   }
   /**
