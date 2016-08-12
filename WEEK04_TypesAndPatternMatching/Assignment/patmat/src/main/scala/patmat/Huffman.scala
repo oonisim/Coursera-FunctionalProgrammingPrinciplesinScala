@@ -249,8 +249,8 @@ object Huffman {
    * frequencies from that text and creates a code tree based on them.
    */
   def createCodeTree(chars: List[Char]): CodeTree = {
-      val list: List[CodeTree] = until(Huffman.singleton, Huffman.combine)(makeOrderedLeafList(Huffman.times(chars)))
-      list.head
+    val list: List[CodeTree] = until(Huffman.singleton, Huffman.combine)(makeOrderedLeafList(Huffman.times(chars)))
+    list.head
   }
 
   // Part 3: Decoding
@@ -263,7 +263,29 @@ object Huffman {
    * the resulting list of characters.
    * *******************************************************************************
    */
-  def decode(tree: CodeTree, bits: List[Bit]): List[Char] = ???
+  def decode(tree: CodeTree, bits: List[Bit]): List[Char] = {
+    //--------------------------------------------------------------------------------
+    // While decoding 11-010-1101 (ABC), a sub tree of the Code Tree is being used.
+    // When a code 11 (A) is decoded, then need to restart the decoding form the top 
+    // of the Code Tree for the next ode 010.
+    // top is the entire code tree, and tree is the sub tree.
+    //--------------------------------------------------------------------------------
+    def decorder (top: CodeTree, tree: CodeTree, bits: List[Bit]): List[Char] = tree match {
+      case Leaf(c, w) => {
+        if(bits.isEmpty) List(c)
+        else c::decorder(top,top, bits)
+      }
+      case Fork(left, right, s, w) => {
+        if (bits.isEmpty) {
+          Nil
+        } else {
+          if (bits.head == 0) decorder(top, left, bits.tail)
+          else decorder(top, right, bits.tail)
+        }
+      }
+    }
+    decorder(tree, tree, bits)
+  }
 
   /**
    * A Huffman coding tree for the French language.
@@ -331,7 +353,7 @@ object Huffman {
 // Personal test code
 //--------------------------------------------------------------------------------
 object TestHuffman extends App {
-  val ol = Huffman.makeOrderedLeafList(Huffman.times("aaabbcdddd".toList))
+  val ol = Huffman.makeOrderedLeafList(Huffman.times("xxxxyyzzzzzzzddddddaabbcddfdfddddkkkkkkkkkkkkkkkkk".toList))
   ol.foreach(println)
   println(Huffman.until(Huffman.singleton, Huffman.combine)(ol).head.toString)
 
