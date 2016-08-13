@@ -215,16 +215,9 @@ object Huffman {
     }
     //--------------------------------------------------------------------------------
     // Create a fork from the first two, then recreate list where weights is ordered.
-    // Preserve means.
-    // a/2 -> b/3 -> d/4
-    // 
-    //   N -> d/4    <===== (2, 3, 4) is still preserved for left first recurse.
-    //  / \
-    // a/2 b/3
     //--------------------------------------------------------------------------------
     if (trees.length < 2) trees
     else insert(makeCodeTree(trees.head, trees.tail.head), trees.tail.tail)
-    //else makeCodeTree(trees.head, trees.tail.head) :: trees.tail.tail
   }
 
   /**
