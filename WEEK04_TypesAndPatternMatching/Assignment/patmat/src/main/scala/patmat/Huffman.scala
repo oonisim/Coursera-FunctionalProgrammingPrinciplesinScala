@@ -208,13 +208,12 @@ object Huffman {
     def insert(c: CodeTree, list: List[CodeTree]): List[CodeTree] = list match {
       case Nil => List(c)
       case h :: t => {
-        //println("combine:insert => Fork [%s] into List [%s]".format(c, list))
         if (weight(c) < weight(h)) c :: list
         else h :: insert(c, t)
       }
     }
     //--------------------------------------------------------------------------------
-    // Create a fork from the first two, then recreate list where weights is ordered.
+    // Create a Fork from the first two, then create a list where weights is ordered.
     //--------------------------------------------------------------------------------
     if (trees.length < 2) trees
     else insert(makeCodeTree(trees.head, trees.tail.head), trees.tail.tail)
@@ -285,12 +284,9 @@ object Huffman {
         else c :: decorder(top, bits)
       }
       case Fork(left, right, s, w) => {
-        if (bits.isEmpty) {
-          Nil
-        } else {
-          if (bits.head == BIT_L) decorder(left, bits.tail)
-          else decorder(right, bits.tail)
-        }
+        if (bits.isEmpty) Nil
+        else if (bits.head == BIT_L) decorder(left, bits.tail)
+        else decorder(right, bits.tail)
       }
     }
     decorder(tree, bits)
@@ -363,17 +359,9 @@ object Huffman {
     }
     case Fork(left, right, str, w) => {
       //println("In encorder target = %c, left = %s, right = %s".format(target, left.toString, right.toString))
-      if (chars(left).exists(x => (x == target))) {
-        BIT_L :: encoder(left)(target)
-      } else if (chars(right).exists(x => (x == target))) {
-        BIT_R :: encoder(right)(target)
-      } else {
-        throw new IllegalStateException("%c does not exist in the code tree".format(target))
-      }
-    }
-    case _ => {
-      throw new IllegalStateException("%c does not exist in the code tree".format(target))
-      List(-1)
+      if (chars(left).contains(target)) BIT_L :: encoder(left)(target)
+      else if (chars(right).contains(target)) BIT_R :: encoder(right)(target)
+      else throw new IllegalStateException("%c does not exist in the code tree".format(target))
     }
   }
 
@@ -386,8 +374,12 @@ object Huffman {
    * the code table `table`.
    */
   def codeBits(table: CodeTable)(char: Char): List[Bit] = {
+    /*
+    val c = (table.filter(_._1 == char))
+    if(!c.isEmpty) c(0)._2 else Nil
+    */
     if (table.isEmpty) Nil
-    if (table.head._1 == char) table.head._2
+    else if (table.head._1 == char) table.head._2
     else codeBits(table.tail)(char)
   }
 
@@ -403,19 +395,14 @@ object Huffman {
     // Left is 0, Right is 1
     case Leaf(c, w) => List[(Char, List[Bit])]()
     case Fork(left, right, str, w) => {
-      def createCodeTable(tree: CodeTree, code: List[Bit]): CodeTable = tree match {
-        case Leaf(c, w) => {
-          //println("createCodeTable %c, %s".format(c, code))
-          List((c, code))
-        }
-        case Fork(left, right, str, w) => {
-          //--------------------------------------------------------------------------------
-          // Create child code tables. If current code is 00, then left is 00+0, right is 00+1.
-          //--------------------------------------------------------------------------------
-          mergeCodeTables(createCodeTable(left, code ::: List(BIT_L)), createCodeTable(right, code ::: List(BIT_R)))
-        }
+      //--------------------------------------------------------------------------------
+      // Create a code table. If current code is 00, then left is 00+0, right is 00+1.
+      //--------------------------------------------------------------------------------
+      def create(tree: CodeTree, code: List[Bit]): CodeTable = tree match {
+        case Leaf(c, w) => List((c, code))
+        case Fork(left, right, str, w) => mergeCodeTables(create(left, code ::: List(BIT_L)), create(right, code ::: List(BIT_R)))
       }
-      mergeCodeTables(createCodeTable(left, List(BIT_L)), createCodeTable(right, List(BIT_R)))
+      mergeCodeTables(create(left, List(BIT_L)), create(right, List(BIT_R)))
     }
   }
 
