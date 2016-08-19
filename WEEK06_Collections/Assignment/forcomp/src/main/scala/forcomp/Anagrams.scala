@@ -228,13 +228,12 @@ object Anagrams {
     }
   }
   //--------------------------------------------------------------------------------
-  // Create an anagram sentence for all the remaining available occurrences.
+  // Create anagram sentences for all the remaining available occurrences.
   //--------------------------------------------------------------------------------
   def create(remaining: Occurrences, level: Int): Option[List[Sentence]] = {
-    if (remaining.isEmpty){
-      Some(List(List()))
-    } else {
-      val generated = for {
+    if (remaining.isEmpty) Some(List(List()))
+    else {
+      val anagrams = for {
         //--------------------------------------------------------------------------------
         // Create possible occurrences combinations.
         // For each pattern in the combinations, get meaningful words from the dictionary.
@@ -243,29 +242,62 @@ object Anagrams {
         occurrence <- combinations(remaining)
         word <- dictionaryByOccurrences(occurrence)
       } yield {
-        for (i <- 0 until level) print("\t")
-        println("word is %s".format(word))
         create(subtract(remaining, occurrence), level + 1) match {
-          case None => Nil
-          case Some(sentences) => {
-            val a = sentences.foldLeft(List[Sentence]())((_accumulator, _sentence) => _accumulator :+ (word :: _sentence))
-            a
+          case None => {
+            //--------------------------------------------------------------------------------
+            // This keep adding Nil into the anagrams, hence result could be like below.
+            // Need to find out a way not to collect Nil in this for comprehension.
+            // In the meantime, apply filter(!isEmpty) on the result.
+            //
+            // List(
+            //   List("I", "love", "sushi"),
+            //   List("sushi", "I", "love"),
+            //   List(),
+            //   List("love", "sushi", "I"),
+            //   List()
+            //   List(,
+            // }
+            //--------------------------------------------------------------------------------
+            Nil
+          }
+          case Some(childs) => {
+            //--------------------------------------------------------------------------------
+            // List( <----- For accumulatees List[Sentence] into another list.
+            //   List(
+            //     List("I", "love", "sushi"),
+            //     List("sushi", "I", "love")
+            //   ),
+            //   List (
+            //     List("love", "sushi", "I")
+            //   )
+            // )
+            // 
+            // Need to flatten the result into a single List[Sentence] the end.
+            // List(
+            //     List("I", "love", "sushi"),
+            //     List("sushi", "I", "love")
+            //     List("love", "sushi", "I")
+            //)
+            //--------------------------------------------------------------------------------
+            def concat(accumulator: List[Sentence], child: Sentence): List[Sentence] = {
+              //--------------------------------------------------------------------------------
+              // Create a parent sentence by (word + child sentence) and accumulate.
+              //--------------------------------------------------------------------------------
+              accumulator :+ (word :: child)
+            }
+            childs.foldLeft(List[Sentence]())(concat)
           }
         }
-      }
+      }.filter(x => !x.isEmpty)
       //--------------------------------------------------------------------------------
       // If no sentences could be made for the available occurrences (remaining) > 0,
-      // then, this remaining is invalid.
+      // then, this remaining occurrences is invalid.
       //--------------------------------------------------------------------------------
-      for (i <- 0 until level) print("\t")
-      val result = generated.filter(x => !x.isEmpty)
-      if(result.isEmpty) {
-        println("Occurence [%s] has no sentence. This should not be included".format(remaining))
-        None
-      }
+      if (anagrams.isEmpty) None
       else {
-        println("generated count = %d, contents = %s".format(result.length, result))
-        Some(result.flatten)
+        // for (i <- 0 until level) print("\t")
+        //println("generated count = %d, contents = %s".format(result.length, result))
+        Some(anagrams.flatten)
       }
     }
   }
