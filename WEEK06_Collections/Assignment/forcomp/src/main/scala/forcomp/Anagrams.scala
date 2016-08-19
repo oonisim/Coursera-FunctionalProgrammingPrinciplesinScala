@@ -1,5 +1,6 @@
 package forcomp
 
+import util.control.Breaks._
 object Anagrams {
 
   /** A word is simply a `String`. */
@@ -26,7 +27,8 @@ object Anagrams {
    * The dictionary is simply a sequence of words.
    *  It is predefined and obtained as a sequence using the utility method `loadDictionary`.
    */
-  val dictionary: List[Word] = loadDictionary
+  //  val dictionary: List[Word] = loadDictionary
+  val dictionary: List[Word] = List("I", "love", "sushi", "hamachi", "like")
 
   /**
    * Converts the word into its character occurrence list.
@@ -42,7 +44,8 @@ object Anagrams {
   }
 
   /** Converts a sentence into its character occurrence list. */
-  def sentenceOccurrences(s: Sentence): Occurrences = wordOccurrences(s.flatten.toString)
+  //def sentenceOccurrences(s: Sentence): Occurrences = wordOccurrences(s.flatten.toString)
+  def sentenceOccurrences(s: Sentence): Occurrences = wordOccurrences(s.flatten.mkString)
 
   /**
    * The `dictionaryByOccurrences` is a `Map` from different occurrences to a sequence of all
@@ -61,7 +64,10 @@ object Anagrams {
    *
    */
   lazy val dictionaryByOccurrences: Map[Occurrences, List[Word]] = {
-    dictionary.distinct.groupBy(word => wordOccurrences(word))
+    //--------------------------------------------------------------------------------
+    // If there is no matching key/occurrences for the map, give Nil.
+    //--------------------------------------------------------------------------------
+    dictionary.distinct.groupBy(word => wordOccurrences(word)) withDefaultValue List[Word]()
   }
 
   /** Returns all the anagrams of a given word. */
@@ -95,8 +101,8 @@ object Anagrams {
     // [Logic]
     // All combinations(X, Y, Z) = combination of X included + Combination of X excluded.
     //--------------------------------------------------------------------------------
-    println("combinations in. occurances = " + occurrences)
-    if (occurrences.isEmpty) List(List[(Char, Int)]())  // NOT List[Occurrences]()
+    //println("combinations in. occurances = " + occurrences)
+    if (occurrences.isEmpty) List(List[(Char, Int)]()) // NOT List[Occurrences]()
     else {
       val (c, n) = occurrences.head
       val excluded = combinations(occurrences.tail)
@@ -107,7 +113,7 @@ object Anagrams {
         //println("_occurance = " + _occurance + " generating " + (c -> i) :: _occurance)
         (c -> i) :: _occurance
       }
-      included.toList ::: excluded
+      (included.toList ::: excluded)
     }
   }
 
@@ -122,7 +128,56 @@ object Anagrams {
    *  Note: the resulting value is an occurrence - meaning it is sorted
    *  and has no zero-entries.
    */
-  def subtract(x: Occurrences, y: Occurrences): Occurrences = ???
+  //--------------------------------------------------------------------------------
+  // Subtract only legal when y is sub set of x, which is x frequency >= y frequency.
+  // This condition is assured because:
+  // 1. If the sentence has the occurrences such as ((a, 5), (b, 3), (c, 1)), then 
+  //    a potential anagram sentence is decomposed as (word + sub sentence). 
+  // 2. Subtract is used to get remaining available occurrences for the sub sentence.
+  //    For example if word occurrences is (a, 2), it is always a sub set of the
+  //    sentence occurrences ((a, 5), (b, 3), (c, 1)).
+  // 
+  // When no element left such as subtract(('a', 1), ('a', 1), then it is legal.
+  // In this case, Nil is the result.
+  //--------------------------------------------------------------------------------
+  def subtract(x: Occurrences, y: Occurrences): Occurrences = {
+    //--------------------------------------------------------------------------------
+    // ymap is a Map of (key, frequency) to get the frequency for the key.
+    // If there is no key match, then give 0, then the frequency of x will remain.
+    //--------------------------------------------------------------------------------
+    val ymap = y.toMap withDefaultValue 0
+
+    //--------------------------------------------------------------------------------
+    // Generate a new list of element List(key, xf-yf) by subtracting frequency of y 
+    // element from that of x element. The return type is List so that if the frequencies
+    // are the same, it can return List().
+    // Need to handle the cases of:
+    // 1. There is no key in y. 
+    //    When x = (a, 2), (b, 1) and y = (a, 2), there is no 'b' in ymap. 
+    //    Then the x element itself so that the caller keep appending (b, 1) ...
+    // 2. (xf - yf) is zero.
+    //    Need to remove the 'element' from the occurrences of the caller.
+    //    Hence, Nil so that appending it is same with removing it.
+    // 3. (xf - yf) is minus.
+    //     Subtracting is illegal, hence RETURN None to stop the subtract.
+    //--------------------------------------------------------------------------------
+    def newelement(element: (Char, Int)): List[(Char, Int)] = {
+      val (key, xf) = element
+      val yf = ymap(key)
+
+      require(xf >= yf, "x frequency must be >= that of y")
+      if (xf == yf) Nil
+      else if (yf == 0) List(element)
+      else List((key, xf - yf))
+    }
+    //--------------------------------------------------------------------------------
+    // Build a new x by accumulating new x elements.
+    //--------------------------------------------------------------------------------
+    def build(accumulator: Occurrences, element: (Char, Int)): Occurrences = {
+      accumulator ++ newelement(element)
+    }
+    x.foldLeft(List[(Char, Int)]())((_accumulator, element) => build(_accumulator, element))
+  }
 
   /**
    * Returns a list of all anagram sentences of the given sentence.
@@ -165,13 +220,71 @@ object Anagrams {
    *
    *  Note: There is only one anagram of an empty sentence.
    */
-  def sentenceAnagrams(sentence: Sentence): List[Sentence] = ???
+  def sentenceAnagrams(sentence: Sentence): List[Sentence] = {
+    if (sentence.isEmpty) List(sentence)
+    create(sentenceOccurrences(sentence), 0) match {
+      case None => Nil
+      case Some(sentences) => sentences
+    }
+  }
+  //--------------------------------------------------------------------------------
+  // Create an anagram sentence for all the remaining available occurrences.
+  //--------------------------------------------------------------------------------
+  def create(remaining: Occurrences, level: Int): Option[List[Sentence]] = {
+    if (remaining.isEmpty){
+      Some(List(List()))
+    } else {
+      val generated = for {
+        //--------------------------------------------------------------------------------
+        // Create possible occurrences combinations.
+        // For each pattern in the combinations, get meaningful words from the dictionary.
+        // For each word in words, create anagram sentences, including the word itself. 
+        //--------------------------------------------------------------------------------
+        occurrence <- combinations(remaining)
+        word <- dictionaryByOccurrences(occurrence)
+      } yield {
+        for (i <- 0 until level) print("\t")
+        println("word is %s".format(word))
+        create(subtract(remaining, occurrence), level + 1) match {
+          case None => Nil
+          case Some(sentences) => {
+            val a = sentences.foldLeft(List[Sentence]())((_accumulator, _sentence) => _accumulator :+ (word :: _sentence))
+            a
+          }
+        }
+      }
+      //--------------------------------------------------------------------------------
+      // If no sentences could be made for the available occurrences (remaining) > 0,
+      // then, this remaining is invalid.
+      //--------------------------------------------------------------------------------
+      for (i <- 0 until level) print("\t")
+      val result = generated.filter(x => !x.isEmpty)
+      if(result.isEmpty) {
+        println("Occurence [%s] has no sentence. This should not be included".format(remaining))
+        None
+      }
+      else {
+        println("generated count = %d, contents = %s".format(result.length, result))
+        Some(result.flatten)
+      }
+    }
+  }
 }
 
 import forcomp.Anagrams._
+import com.sun.org.apache.xerces.internal.impl.xs.models.XSDFACM.Occurence
+
 object AnagramsTest extends App {
   val fish = List("uni", "tako", "saba", "abas")
   //println(fish.distinct.groupBy(word => wordOccurrences(word)))
   //println(wordAnagrams("sacal"))
-  println(combinations(List(('a', 2), ('b', 2))))
+  //println(combinations(List(('a', 2), ('b', 2))))
+  //println(subtract(List(('a', 3), ('b', 2), ('c', 1)), List(('a', 2), ('b', 2))))
+  //println(subtract(List(('a', 3), ('b', 2)), List(('a', 3), ('b', 2))))
+  //println(wordOccurrences("love"))
+  //println(sentenceOccurrences(List("love", "h"))) 
+  //val dictionary: List[Word] = List("I", "love", "sushi", "hamachi", "like")
+  // println("dictionary -= " + dictionaryByOccurrences)
+  println(sentenceAnagrams(List("i", "lovesushi")))
+  List(Nil).foldLeft(List("abc"))((_accumulator, _sentence) => _accumulator ::: _sentence)
 }
