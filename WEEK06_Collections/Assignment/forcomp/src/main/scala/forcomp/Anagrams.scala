@@ -27,8 +27,8 @@ object Anagrams {
    * The dictionary is simply a sequence of words.
    *  It is predefined and obtained as a sequence using the utility method `loadDictionary`.
    */
-  //  val dictionary: List[Word] = loadDictionary
-  val dictionary: List[Word] = List("I", "love", "sushi", "hamachi", "like")
+  val dictionary: List[Word] = loadDictionary
+  //val dictionary: List[Word] = List("I", "love", "sushi", "hamachi", "like")
 
   /**
    * Converts the word into its character occurrence list.
