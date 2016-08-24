@@ -128,6 +128,7 @@ object Anagrams {
    *  Note: the resulting value is an occurrence - meaning it is sorted
    *  and has no zero-entries.
    */
+  /* 
   //--------------------------------------------------------------------------------
   // Subtract only legal when y is sub set of x, which is x frequency >= y frequency.
   // This condition is assured because:
@@ -177,6 +178,21 @@ object Anagrams {
       accumulator ++ newelement(element)
     }
     x.foldLeft(List[(Char, Int)]())((_accumulator, element) => build(_accumulator, element))
+  }
+  * 
+  */
+  /**
+   * Refactoring of the implementation. Make the most of the nature of the data.
+   *  1. x and y are sorted.
+   *  2. y is sub set of x.
+   */
+  def subtract(x: Occurrences, y: Occurrences): Occurrences = (x, y) match {
+    case (x, Nil) => x
+    case ((xc, xf) :: xt, (yc, yf) :: yt) => {
+      if (xc < yc) x.head :: subtract(xt, y)
+      else if (xf > yf) (xc, xf - yf) :: subtract(xt, yt)
+      else subtract(xt, yt)
+    }
   }
 
   /**
@@ -311,12 +327,36 @@ object AnagramsTest extends App {
   //println(fish.distinct.groupBy(word => wordOccurrences(word)))
   //println(wordAnagrams("sacal"))
   //println(combinations(List(('a', 2), ('b', 2))))
-  //println(subtract(List(('a', 3), ('b', 2), ('c', 1)), List(('a', 2), ('b', 2))))
+  println(subtract(List(('a', 3), ('b', 2), ('c', 1)), List(('a', 2), ('b', 2))))
   //println(subtract(List(('a', 3), ('b', 2)), List(('a', 3), ('b', 2))))
   //println(wordOccurrences("love"))
   //println(sentenceOccurrences(List("love", "h"))) 
   //val dictionary: List[Word] = List("I", "love", "sushi", "hamachi", "like")
   // println("dictionary -= " + dictionaryByOccurrences)
-  println(sentenceAnagrams(List("i", "lovesushi")))
-  List(Nil).foldLeft(List("abc"))((_accumulator, _sentence) => _accumulator ::: _sentence)
+  //println(sentenceAnagrams(List("Scala", "is", "fun")))
+  val sentence = List("Linux", "rules")
+  val anas = List(
+    List("Rex", "Lin", "Zulu"),
+    List("nil", "Zulu", "Rex"),
+    List("Rex", "nil", "Zulu"),
+    List("Zulu", "Rex", "Lin"),
+    List("null", "Uzi", "Rex"),
+    List("Rex", "Zulu", "Lin"),
+    List("Uzi", "null", "Rex"),
+    List("Rex", "null", "Uzi"),
+    List("null", "Rex", "Uzi"),
+    List("Lin", "Rex", "Zulu"),
+    List("nil", "Rex", "Zulu"),
+    List("Rex", "Uzi", "null"),
+    List("Rex", "Zulu", "nil"),
+    List("Zulu", "Rex", "nil"),
+    List("Zulu", "Lin", "Rex"),
+    List("Lin", "Zulu", "Rex"),
+    List("Uzi", "Rex", "null"),
+    List("Zulu", "nil", "Rex"),
+    List("rules", "Linux"),
+    List("Linux", "rules"))
+  //println(sentenceAnagrams(sentence).toSet)
+  //println(anas.toSet.diff(sentenceAnagrams(sentence).toSet))
+  //println(wordAnagrams("rules"))
 }
