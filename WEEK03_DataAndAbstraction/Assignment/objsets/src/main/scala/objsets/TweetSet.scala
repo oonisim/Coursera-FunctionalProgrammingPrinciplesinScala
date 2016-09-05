@@ -160,32 +160,38 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
     //--------------------------------------------------------------------------------
     // Within this set, keep recursing down to the left-most node.
     // From the left-most, start adding each node to "that" set by (incl elem).
-    //    LB(Left-Bottom)
+    //         LB-1
+    //        / \
+    //       /   T 
+    //      /
+    //    LB(Left-Bottom) <=== T is passed as "that" here.
     //    / \  
     //   /   E
-    //  E <=== (E union that (T)) returns that  
+    //  E <=== (left(E) union that (T)) returns T  
     //
-    //    LB(Left-Bottom) <=== (T incl elem) adds LB to T and replaced with T.
+    //    LB(Left-Bottom) <=== (T incl elem) adds LB to T, hence ((left union that) incl elem) becomes T+LB.
     //      \  
     //       E
     //
-    //    T(That)
+    //    T+LB
     //      \  
-    //       E <=== (right union T) returns that.
+    //       E <=== (right union T) returns T+LB.
     //
-    //    T    <=== The LB becomes T.
+    //     LB-1
+    //      / \
+    //     /   T
+    //    T+LB <=== At the LB-1 level, (left(LB) union that) becomes T+LB.
     //
-    //    LB-1(Left-Bottom -1 level) <=== (T incl elem) adds LB-1 to T and replaced with T.
+    //    LB-1(Left-Bottom -1 level) <=== (T+LB incl elem) adds LB-1 to T+LB.
     //      \  
-    //       N(Node)
+    //       T
     //
-    //    T 
+    //    T + LB + (LB-1) <=== (right(T) union (T + LB + (LB-1))) is to be executed, and the processing moves on to 'right' which is T.
     //      \  
-    //       N(Node) <=== Repeat the pattern of LB.
+    //       T <=== Repeat the pattern of LB.
     //      / \
     //     E   E
-    //--------------------------------------------------------------------------------
-    (right union ((left union that) incl elem))
+    //--------------------------------------------------------------------------------    (right union ((left union that) incl elem))
   }
   def mostRetweeted: Tweet = {
     //--------------------------------------------------------------------------------
