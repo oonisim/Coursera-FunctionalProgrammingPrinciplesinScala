@@ -191,7 +191,8 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
     //       T <=== Repeat the pattern of LB.
     //      / \
     //     E   E
-    //--------------------------------------------------------------------------------    (right union ((left union that) incl elem))
+    //--------------------------------------------------------------------------------
+    (right union ((left union that) incl elem))
   }
   def mostRetweeted: Tweet = {
     //--------------------------------------------------------------------------------
